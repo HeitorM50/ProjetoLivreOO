@@ -10,16 +10,16 @@ class Pet:
         self.peso + comida 
     
 class Abrigo:
-    catalogo = []
+    __catalogo = []
 
     def adicionarPet (self,pet):
-        self.catalogo.append(pet)
+        self.__catalogo.append(pet)
     
     def ImprimirAbrigo(self):
         print('Pets no Abrigo:')
         print('-----------------------')
 
-        for pet in self.catalogo:
+        for pet in self.__catalogo:
             pet.Imprimir_pet()
             print('--------------')
 
