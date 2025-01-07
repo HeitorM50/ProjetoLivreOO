@@ -1,65 +1,73 @@
-import pickle
+import json
 
 class Carro:
-    def __init__(self, placa, modelo, tarifa_diaria):           #criação da classe carro com os métodos e atributos
+    def __init__(self, placa, modelo, tarifa_diaria):           
         self.placa = placa
         self.modelo = modelo
-        self.__tarifa_diaria = tarifa_diaria
-        self.__disponivel = True
-#==========================================================================
+        self.tarifa_diaria = tarifa_diaria
+        self.disponivel = True
+#======================================================================================
     def get_tarifa_diaria(self):
-        return self.__tarifa_diaria                             #Getters e Setters para retornar valores de tarifa e disponibilidade
+        return self.tarifa_diaria
 
     def get_disponivel(self):
-        return self.__disponivel
+        return self.disponivel
 
     def set_disponivel(self, disponibilidade):
-        self.__disponivel = disponibilidade
-#==========================================================================
-    def alugar(self):                                              # Métodos de Alugar e devolver 
-        if self.__disponivel:
-            self.__disponivel = False
+        self.disponivel = disponibilidade
+#======================================================================================
+    def alugar(self):
+        if self.disponivel:
+            self.disponivel = False
             print(f"O carro {self.modelo} ({self.placa}) foi alugado!")
         else:
             print(f"O carro {self.modelo} ({self.placa}) não está disponível.")
 
     def devolver(self):
-        self.__disponivel = True
+        self.disponivel = True
         print(f"O carro {self.modelo} ({self.placa}) foi devolvido!")
+#======================================================================================
+    def to_dict(self):
+        return {
+            "placa": self.placa,
+            "modelo": self.modelo,
+            "tarifa_diaria": self.tarifa_diaria,
+            "disponivel": self.disponivel
+        }
+
+    @classmethod
+    def from_dict(cls, dados):
+        carro = cls(dados["placa"], dados["modelo"], dados["tarifa_diaria"])
+        carro.disponivel = dados["disponivel"]
+        return carro
 
     def __str__(self):
-        status = "Disponível" if self.__disponivel else "Indisponível"
-        return f"Modelo: {self.modelo}, Placa: {self.placa}, Tarifa Diária: R${self.__tarifa_diaria:.2f}, Status: {status}"
-
-#==========================================================================
-class CarroEconomico(Carro):                                        #Herança da Classe Carro
-    def __init__(self, placa, modelo, tarifa_diaria):
-        super().__init__(placa, modelo, tarifa_diaria * 0.9)         #Chama todos os métodos e atributos
-
-    def __str__(self):
-        status = "Disponível" if self.get_disponivel() else "Indisponível"
-        return f"[Econômico] Modelo: {self.modelo}, Placa: {self.placa}, Tarifa Diária: R${self.get_tarifa_diaria():.2f}, Status: {status}"
-
-#==========================================================================
+        if self.disponivel: 
+            status = "Disponível" 
+        else:
+            return "Indisponível"
+        
+        return f"Modelo: {self.modelo}, Placa: {self.placa}, Tarifa Diária: R${self.tarifa_diaria:.2f}, Status: {status}"
+#======================================================================================
 class SistemaAluguelCarros:
     def __init__(self):
         self.carros = self.inicializar_carros()
 
     def inicializar_carros(self):
         return [
-            Carro("ABC1234", "Toyota Corolla", 120.00),
-            Carro("XYZ5678", "Honda Civic", 130.00),
-            CarroEconomico("LMN2468", "Up  TSI", 150.00),
-            CarroEconomico("PQR1357", "Mobi Like", 180.00),
+            Carro("PBX6850", "Jeep Renegade", 120.00),
+            Carro("JKO5678", "Honda Civic", 130.00),
+            Carro("JPK7869", "Volkswagen Jetta", 150.00),
+            Carro("PQR1357", "Renault Logan", 180.00),
             Carro("DEF7890", "Volkswagen Golf", 140.00),
-            CarroEconomico("GHI2345", "Chevrolet Onix", 100.00)
+            Carro("GHI2180", "Volkswagen Up TSI", 100.00)
         ]
-#==========================================================================
-    def listar_carros(self):                                      #Imprime a lista de carros com o laço for
+#======================================================================================
+    def listar_carros(self):
         for i, carro in enumerate(self.carros):
             print(f"{i + 1}. {carro}")
-#==========================================================================
-    def alugar_carro(self, indice_carro):               #cria o objeto carro que terá um indice de 0 a 7, o -1 inclui o 0 para o usuário
+
+    def alugar_carro(self, indice_carro):
         try:
             carro = self.carros[indice_carro - 1]
             carro.alugar()
@@ -72,26 +80,27 @@ class SistemaAluguelCarros:
             carro.devolver()
         except IndexError:
             print("Carro inválido.")
-#==========================================================================
-    def salvar_dados(self, nome_arquivo):                       
-        with open(nome_arquivo, 'wb') as arquivo:               #Uso da Biblioteca Pickle para salvar dados e carregar dados         
-            pickle.dump(self.carros, arquivo)
+
+    def salvar_dados(self, nome_arquivo):
+        with open(nome_arquivo, 'w') as arquivo:
+            json.dump([carro.to_dict() for carro in self.carros], arquivo, indent=4)
         print("Dados salvos com sucesso!")
 
     def carregar_dados(self, nome_arquivo):
         try:
-            with open(nome_arquivo, 'rb') as arquivo:
-                self.carros = pickle.load(arquivo)
+            with open(nome_arquivo, 'r') as arquivo:
+                dados = json.load(arquivo)
+                self.carros = [Carro.from_dict(carro) for carro in dados]
             print("Dados carregados com sucesso!")
         except FileNotFoundError:
             print("Arquivo não encontrado.")
-#==========================================================================
+#======================================================================================
 def main():
     sistema = SistemaAluguelCarros()
-    nome_arquivo = "dados_aluguel.pkl" 
+    nome_arquivo = "dados_aluguel.json"  
 
     while True:
-        print("\n=====ALUGAFÁCIL=====")
+        print("\n===== ALUGA FÁCIL =====")
         print("1) Listar carros")
         print("2) Alugar carro")
         print("3) Devolver carro")
@@ -102,12 +111,12 @@ def main():
 
         if escolha == '1':
             sistema.listar_carros()
-            input("\nPressione Enter para voltar ao menu") 
+            input("\nPressione Enter para voltar ao menu...")  
 
         elif escolha == '2':
             sistema.listar_carros()
             try:
-                indice_carro = int(input("\nEscolha o número do carro que deseja alugar: "))
+                indice_carro = int(input("\nEscolha o número do carro a alugar: "))
                 sistema.alugar_carro(indice_carro)
             except ValueError:
                 print("Entrada inválida. Por favor, digite um número.")
@@ -115,7 +124,7 @@ def main():
         elif escolha == '3':
             sistema.listar_carros()
             try:
-                indice_carro = int(input("\nEscolha o número do carro que queira devolver: "))
+                indice_carro = int(input("\nEscolha o número do carro a devolver: "))
                 sistema.devolver_carro(indice_carro)
             except ValueError:
                 print("Entrada inválida. Por favor, digite um número.")
@@ -132,6 +141,7 @@ def main():
 
         else:
             print("Opção inválida. Tente novamente.")
+
 
 if __name__ == "__main__":
     main()

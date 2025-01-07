@@ -25,4 +25,4 @@ CriarTelevisão.py que demosntra a utilização de uma classe construtora e do u
 Encapsulamento.py que demonstra a utilização de encapsular instâncias de uma classe
 MetodosAtributos.py demonstra a criação de um objeto 
 HerançaePolimorfismo.py demonstra a utilização de herança e polimorfismo 
-AlugaFacil.py junta todos os outros exercícios em um só código e com interação com o usuário
+AlugaFacil.py junta todos os outros exercícios em um só código e com interação com o usuário e uso de JSON para serialização
