@@ -1,4 +1,5 @@
 import json
+from tkinter import *
 
 class Carro:
     def __init__(self, placa, modelo, tarifa_diaria):           
@@ -55,93 +56,105 @@ class SistemaAluguelCarros:
 
     def inicializar_carros(self):
         return [
-            Carro("PBX6850", "Jeep Renegade", 120.00),
-            Carro("JKO5678", "Honda Civic", 130.00),
-            Carro("JPK7869", "Volkswagen Jetta", 150.00),
-            Carro("PQR1357", "Renault Logan", 180.00),
-            Carro("DEF7890", "Volkswagen Golf", 140.00),
-            Carro("GHI2180", "Volkswagen Up TSI", 100.00)
+            {"placa": "PBX6850", "modelo": "Jeep Renegade", "tarifa_diaria": 160.00, "disponivel": True},
+            {"placa": "JKO5678", "modelo": "Honda Civic", "tarifa_diaria": 130.00, "disponivel": True},
+            {"placa": "JPK7869", "modelo": "Volkswagen Up TSI", "tarifa_diaria": 100.00, "disponivel": True},
+            {"placa": "JPK7869", "modelo": "Fiat Mobi Like", "tarifa_diaria": 90.00, "disponivel": True},
+            {"placa": "JPK7869", "modelo": "Renault Logan", "tarifa_diaria": 150.00, "disponivel": True},
+            {"placa": "JPK7869", "modelo": "Chevrolet Onix", "tarifa_diaria": 120.00, "disponivel": True},
         ]
-#======================================================================================
+
     def listar_carros(self):
-        for i, carro in enumerate(self.carros):
-            print(f"{i + 1}. {carro}")
+        texto_carros = ""
+        for i, carro in enumerate(self.carros, start=1):
+            status = "Disponível" if carro["disponivel"] else "Indisponível"
+            texto_carros += f"{i}. {carro['modelo']} ({carro['placa']}) - R${carro['tarifa_diaria']:.2f} - {status}\n"
+        return texto_carros
 
-    def alugar_carro(self, indice_carro):
+    def alugar_carro(self, indice):
         try:
-            carro = self.carros[indice_carro - 1]
-            carro.alugar()
+            carro = self.carros[indice - 1]
+            if carro["disponivel"]:
+                carro["disponivel"] = False
+                return f"O carro {carro['modelo']} foi alugado com sucesso!"
+            else:
+                return f"O carro {carro['modelo']} não está disponível para aluguel."
         except IndexError:
-            print("Carro inválido.")
+            return "Carro inválido. Por favor, escolha um número da lista."
 
-    def devolver_carro(self, indice_carro):
+    def salvar_dados(self, arquivo):
         try:
-            carro = self.carros[indice_carro - 1]
-            carro.devolver()
-        except IndexError:
-            print("Carro inválido.")
-#======================================================================================
-    def salvar_dados(self, nome_arquivo):
-        with open(nome_arquivo, 'w') as arquivo:
-            json.dump([carro.to_dict() for carro in self.carros], arquivo, indent=4)
-        print("Dados salvos com sucesso!")
+            with open(arquivo, 'w') as f:
+                json.dump(self.carros, f, indent=4)
+            return "Dados salvos com sucesso!"
+        except Exception as e:
+            return f"Erro ao salvar dados: {e}"
 
-    def carregar_dados(self, nome_arquivo):
+    def carregar_dados(self, arquivo):
         try:
-            with open(nome_arquivo, 'r') as arquivo:
-                dados = json.load(arquivo)
-                self.carros = [Carro.from_dict(carro) for carro in dados]
-            print("Dados carregados com sucesso!")
+            with open(arquivo, 'r') as f:
+                self.carros = json.load(f)
+            return "Dados carregados com sucesso!"
         except FileNotFoundError:
-            print("Arquivo não encontrado.")
+            return "Arquivo não encontrado."
+        except Exception as e:
+            return f"Erro ao carregar dados: {e}"
 #======================================================================================
-def main():
-    sistema = SistemaAluguelCarros()
-    nome_arquivo = "dados_aluguel.json"  
+def exibir_lista_carros():
+    texto_carros = sistema.listar_carros()
+    resultado.config(state=NORMAL)
+    resultado.delete(1.0, END)
+    resultado.insert(END, texto_carros)
+    resultado.config(state=DISABLED)
+    mensagem.config(text="Digite o número do carro que deseja alugar:")
 
-    while True:
-        print("\n===== ALUGA FÁCIL =====")
-        print("1) Listar carros")
-        print("2) Alugar carro")
-        print("3) Devolver carro")
-        print("4) Salvar dados")
-        print("5) Carregar dados")
-        print("6) Sair")
-        escolha = input("Escolha uma opção: ")
+def alugar_carro_usuario():
+    try:
+        indice = int(entrada.get())
+        mensagem_resultado = sistema.alugar_carro(indice)
+        mensagem.config(text=mensagem_resultado)
+        exibir_lista_carros()  
+    except ValueError:
+        mensagem.config(text="Por favor, insira um número válido.")
 
-        if escolha == '1':
-            sistema.listar_carros()
-            input("\nPressione Enter para voltar ao menu...")  
+def salvar_dados():
+    mensagem_resultado = sistema.salvar_dados("dados_aluguel.json")
+    mensagem.config(text=mensagem_resultado)
 
-        elif escolha == '2':
-            sistema.listar_carros()
-            try:
-                indice_carro = int(input("\nEscolha o número do carro a alugar: "))
-                sistema.alugar_carro(indice_carro)
-            except ValueError:
-                print("Entrada inválida. Por favor, digite um número.")
+def carregar_dados():
+    mensagem_resultado = sistema.carregar_dados("dados_aluguel.json")
+    mensagem.config(text=mensagem_resultado)
+    exibir_lista_carros() 
+#======================================================================================
+janela = Tk()
+janela.title("AlugaFácil")
 
-        elif escolha == '3':
-            sistema.listar_carros()
-            try:
-                indice_carro = int(input("\nEscolha o número do carro a devolver: "))
-                sistema.devolver_carro(indice_carro)
-            except ValueError:
-                print("Entrada inválida. Por favor, digite um número.")
+sistema = SistemaAluguelCarros()
 
-        elif escolha == '4':
-            sistema.salvar_dados(nome_arquivo)
+texto_orientacao = Label(janela, text="Bem-vindo à ALUGA FÁCIL")
+texto_orientacao.grid(column=0, row=0)
 
-        elif escolha == '5':
-            sistema.carregar_dados(nome_arquivo)
+resultado = Text(janela, height=10, width=50, wrap=WORD, state=DISABLED)
+resultado.grid(column=0, row=1)
 
-        elif escolha == '6':
-            print("Saindo do sistema...")
-            break
+botao_listar = Button(janela, text="Exibir Lista de Carros", command=exibir_lista_carros)
+botao_listar.grid(column=0, row=2)
 
-        else:
-            print("Opção inválida. Tente novamente.")
+mensagem = Label(janela, text="")
+mensagem.grid(column=0, row=3)
+
+entrada = Entry(janela, width=10)
+entrada.grid(column=0, row=4)
+
+botao_alugar = Button(janela, text="Alugar Carro", command=alugar_carro_usuario)
+botao_alugar.grid(column=0, row=5)
+
+botao_salvar = Button(janela, text="Salvar Dados", command=salvar_dados)
+botao_salvar.grid(column=0, row=6)
+
+botao_carregar = Button(janela, text="Carregar Dados", command=carregar_dados)
+botao_carregar.grid(column=0, row=7)
+
+janela.mainloop()
 
 
-if __name__ == "__main__":
-    main()
